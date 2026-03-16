@@ -5,6 +5,7 @@ import FeaturedVideo from '../components/FeaturedVideo';
 import Shorts from '../components/Shorts';
 import VideoCarousel from '../components/VideoCarousel';
 import SideBar from '../components/SideBar';
+import MorningBriefing from '../components/MorningBriefing';
 
 const FILTERS = ['All', 'AI', 'Finance', 'Crypto'];
 
@@ -39,6 +40,9 @@ export default function Feed() {
           </h1>
           <PushNotificationBell />
         </div>
+
+        {/* Morning Briefing */}
+        <MorningBriefing />
 
         {/* Featured hero video */}
         <FeaturedVideo />
