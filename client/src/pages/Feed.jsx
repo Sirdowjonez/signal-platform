@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import VideoCard from '../components/VideoCard';
 import PushNotificationBell from '../components/PushNotificationBell';
-import axios from 'axios';
 
 const FILTERS = ['All', 'AI', 'Finance', 'Crypto'];
 
@@ -9,37 +8,79 @@ export default function Feed() {
   const [posts, setPosts] = useState([]);
   const [filter, setFilter] = useState('All');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios.get('/api/posts').then(r => { setPosts(r.data.posts); setLoading(false); })
-      .catch(() => { setPosts([]); setLoading(false); });
-  }, []);
-
-  const filtered = filter === 'All' ? posts : posts.filter(p => p.category.toLowerCase() === filter.toLowerCase());
-
-  const s = {
-    wrap: { maxWidth: '480px', margin: '0 auto', padding: '16px' },
-    header: { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px' },
-    title: { fontSize:'20px', fontWeight:800, margin:0 },
-    filters: { display:'flex', gap:'8px', marginBottom:'20px', overflowX:'auto', paddingBottom:'4px' },
-    pill: active => ({ background: active ? '#00ff88' : '#1a1a1a', color: active ? '#000' : '#aaa', border: 'none', borderRadius:'20px', padding:'7px 16px', fontSize:'13px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap' }),
-    empty: { textAlign:'center', color:'#555', padding:'60px 0', fontSize:'15px' },
-    pulse: { display:'inline-block', width:'8px', height:'8px', borderRadius:'50%', background:'#00ff88', marginRight:'6px', animation:'pulse 1.5s infinite' }
-  };
+    const cat = filter === 'All' ? '' : `?category=${filter.toLowerCase()}`;
+    setLoading(true);
+    fetch(`/api/posts${cat}`)
+      .then(r => r.json())
+      .then(data => { setPosts(data.posts || []); setLoading(false); })
+      .catch(() => { setError('Could not load posts.'); setLoading(false); });
+  }, [filter]);
 
   return (
-    <div style={s.wrap}>
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
-      <div style={s.header}>
-        <h1 style={s.title}><span style={s.pulse} />Live Feed</h1>
+    <div style={{ maxWidth: 520, margin: '0 auto', padding: '24px 16px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h1 style={{ margin: 0, fontSize: 18, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%', background: '#34d399', display: 'inline-block',
+            animation: 'liveDot 1.5s ease-in-out infinite',
+          }} />
+          Live Feed
+        </h1>
         <PushNotificationBell />
       </div>
-      <div style={s.filters}>
-        {FILTERS.map(f => <button key={f} style={s.pill(filter===f)} onClick={() => setFilter(f)}>{f}</button>)}
+
+      {/* Category filters */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, overflowX: 'auto', paddingBottom: 4 }}>
+        {FILTERS.map(f => {
+          const active = filter === f;
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              style={{
+                background: active ? '#6c63ff' : '#0f0f1a',
+                color: active ? '#fff' : '#4a4a6a',
+                border: `1px solid ${active ? '#6c63ff' : '#1c1c2e'}`,
+                borderRadius: 20, padding: '7px 18px',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                whiteSpace: 'nowrap', transition: 'all 0.15s',
+              }}
+            >{f}</button>
+          );
+        })}
       </div>
-      {loading ? <p style={s.empty}>Loading signals...</p>
-        : filtered.length === 0 ? <p style={s.empty}>No posts yet.</p>
-        : filtered.map(p => <VideoCard key={p.id} post={p} />)}
+
+      {/* Content */}
+      {loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {[1, 2, 3].map(i => (
+            <div key={i} style={{
+              height: 260, borderRadius: 14, overflow: 'hidden',
+              background: 'linear-gradient(90deg, #0f0f1a 25%, #16162a 50%, #0f0f1a 75%)',
+              backgroundSize: '1000px 100%',
+              animation: 'shimmer 1.6s ease-in-out infinite',
+            }} />
+          ))}
+        </div>
+      )}
+
+      {!loading && error && (
+        <p style={{ textAlign: 'center', color: '#f87171', padding: '60px 0' }}>{error}</p>
+      )}
+
+      {!loading && !error && posts.length === 0 && (
+        <p style={{ textAlign: 'center', color: '#3a3a5a', padding: '60px 0', fontSize: 15 }}>No posts yet.</p>
+      )}
+
+      {!loading && !error && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {posts.map(p => <VideoCard key={p.id} post={p} />)}
+        </div>
+      )}
     </div>
   );
 }
