@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import VideoCard from '../components/VideoCard';
 import PushNotificationBell from '../components/PushNotificationBell';
+import FeaturedVideo from '../components/FeaturedVideo';
 
 const FILTERS = ['All', 'AI', 'Finance', 'Crypto'];
 
@@ -32,6 +33,9 @@ export default function Feed() {
         </h1>
         <PushNotificationBell />
       </div>
+
+      {/* Featured hero video */}
+      <FeaturedVideo />
 
       {/* Category filters */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, overflowX: 'auto', paddingBottom: 4 }}>
