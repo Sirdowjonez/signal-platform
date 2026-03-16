@@ -1,54 +1,145 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function Login() {
   const navigate = useNavigate();
   const [mode, setMode] = useState('login');
-  const [form, setForm] = useState({ email:'', password:'', name:'' });
+  const [form, setForm] = useState({ email: '', password: '', name: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault(); setError(''); setLoading(true);
+  useEffect(() => {
+    if (localStorage.getItem('signal_token')) navigate('/');
+  }, [navigate]);
+
+  function set(field) {
+    return e => setForm(f => ({ ...f, [field]: e.target.value }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
     try {
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-      const { data } = await axios.post(endpoint, form);
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong');
       localStorage.setItem('signal_token', data.token);
       localStorage.setItem('signal_user', JSON.stringify(data.user));
       navigate('/');
-    } catch (err) { setError(err.response?.data?.error || 'Something went wrong'); }
-    setLoading(false);
-  };
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const s = {
-    wrap: { maxWidth:'380px', margin:'60px auto', padding:'0 16px' },
-    card: { background:'#111', border:'1px solid #1e1e1e', borderRadius:'20px', padding:'32px' },
-    title: { fontSize:'24px', fontWeight:800, margin:'0 0 24px', textAlign:'center' },
-    input: { width:'100%', background:'#1a1a1a', border:'1px solid #333', borderRadius:'10px', padding:'12px 16px', color:'#fff', fontSize:'15px', marginBottom:'12px', boxSizing:'border-box', outline:'none' },
-    btn: { width:'100%', background: loading ? '#555':'#00ff88', color:'#000', border:'none', borderRadius:'10px', padding:'13px', fontSize:'15px', fontWeight:700, cursor:'pointer', marginTop:'4px' },
-    toggle: { textAlign:'center', marginTop:'20px', fontSize:'13px', color:'#888' },
-    toggleBtn: { background:'none', border:'none', color:'#00ff88', cursor:'pointer', fontWeight:600, fontSize:'13px' },
-    err: { background:'#ff000022', border:'1px solid #ff000044', borderRadius:'8px', padding:'10px 14px', color:'#ff6666', fontSize:'13px', marginBottom:'12px' }
+  const inputStyle = {
+    width: '100%', boxSizing: 'border-box',
+    background: '#0d0d18', border: '1px solid #1e1e2e',
+    borderRadius: 10, padding: '13px 16px',
+    color: '#eeeef5', fontSize: 15, outline: 'none',
+    transition: 'border-color 0.2s',
   };
 
   return (
-    <div style={s.wrap}>
-      <div style={s.card}>
-        <h2 style={s.title}>{mode === 'login' ? 'Welcome back ⚡' : 'Join SIGNAL ⚡'}</h2>
-        {error && <div style={s.err}>{error}</div>}
-        <form onSubmit={handleSubmit}>
-          {mode === 'register' && <input style={s.input} placeholder="Your name" value={form.name} onChange={e => setForm({...form, name:e.target.value})} />}
-          <input style={s.input} type="email" placeholder="Email" value={form.email} onChange={e => setForm({...form, email:e.target.value})} required />
-          <input style={s.input} type="password" placeholder="Password" value={form.password} onChange={e => setForm({...form, password:e.target.value})} required />
-          <button style={s.btn} type="submit" disabled={loading}>{loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}</button>
-        </form>
-        <div style={s.toggle}>
-          {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
-          <button style={s.toggleBtn} onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
-            {mode === 'login' ? 'Sign up' : 'Sign in'}
-          </button>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
+      <div style={{ width: '100%', maxWidth: 400 }}>
+
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <span style={{ fontSize: 22, fontWeight: 900, color: '#eeeef5', letterSpacing: 3 }}>SIGNAL</span>
+          </Link>
+          <p style={{ margin: '12px 0 0', color: '#4a4a6a', fontSize: 14 }}>
+            {mode === 'login' ? 'Sign in to your account' : 'Create your account'}
+          </p>
         </div>
+
+        {/* Card */}
+        <div style={{ background: '#0f0f1a', border: '1px solid #1c1c2e', borderRadius: 18, padding: '32px 28px' }}>
+
+          {error && (
+            <div style={{
+              background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
+              borderRadius: 10, padding: '11px 14px',
+              color: '#f87171', fontSize: 13, marginBottom: 20,
+            }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {mode === 'register' && (
+              <input
+                style={inputStyle}
+                placeholder="Full name"
+                value={form.name}
+                onChange={set('name')}
+                autoComplete="name"
+                onFocus={e => e.target.style.borderColor = '#6c63ff'}
+                onBlur={e => e.target.style.borderColor = '#1e1e2e'}
+              />
+            )}
+            <input
+              style={inputStyle}
+              type="email"
+              placeholder="Email address"
+              value={form.email}
+              onChange={set('email')}
+              required
+              autoComplete="email"
+              onFocus={e => e.target.style.borderColor = '#6c63ff'}
+              onBlur={e => e.target.style.borderColor = '#1e1e2e'}
+            />
+            <input
+              style={inputStyle}
+              type="password"
+              placeholder="Password"
+              value={form.password}
+              onChange={set('password')}
+              required
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              onFocus={e => e.target.style.borderColor = '#6c63ff'}
+              onBlur={e => e.target.style.borderColor = '#1e1e2e'}
+            />
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                marginTop: 8,
+                background: loading ? '#1e1e2e' : 'linear-gradient(90deg, #6c63ff, #a78bfa)',
+                color: loading ? '#4a4a6a' : '#fff',
+                border: 'none', borderRadius: 10,
+                padding: '14px', fontSize: 15, fontWeight: 700,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                transition: 'opacity 0.2s',
+              }}
+            >
+              {loading ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
+            </button>
+          </form>
+
+          <div style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: '#4a4a6a' }}>
+            {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+            <button
+              onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
+              style={{ background: 'none', border: 'none', color: '#a78bfa', fontWeight: 700, fontSize: 13, cursor: 'pointer', padding: 0 }}
+            >
+              {mode === 'login' ? 'Sign up' : 'Sign in'}
+            </button>
+          </div>
+        </div>
+
+        <p style={{ textAlign: 'center', marginTop: 20, fontSize: 12, color: '#2a2a3e' }}>
+          AI · Finance · Crypto — curated in real time
+        </p>
       </div>
     </div>
   );
