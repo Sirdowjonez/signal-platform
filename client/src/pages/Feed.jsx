@@ -3,6 +3,7 @@ import VideoCard from '../components/VideoCard';
 import PushNotificationBell from '../components/PushNotificationBell';
 import FeaturedVideo from '../components/FeaturedVideo';
 import Shorts from '../components/Shorts';
+import VideoCarousel from '../components/VideoCarousel';
 
 const FILTERS = ['All', 'AI', 'Finance', 'Crypto'];
 
@@ -40,6 +41,9 @@ export default function Feed() {
 
       {/* Shorts */}
       <Shorts />
+
+      {/* Trending video carousel */}
+      <VideoCarousel title="Trending Now" />
 
       {/* Category filters */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, overflowX: 'auto', paddingBottom: 4 }}>
